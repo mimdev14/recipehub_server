@@ -1,20 +1,23 @@
+const { verifyToken } = require("../utils/jwt");
 const { getUsersCollection } = require("../models/userModel");
 
 const authenticateUser = async (req, res, next) => {
   try {
-    const authUserId = req.headers["x-auth-user-id"];
+    const token = req.cookies.recipehub_token;
 
-    if (!authUserId) {
+    if (!token) {
       return res.status(401).json({
         success: false,
         message: "Authentication required",
       });
     }
 
+    const decoded = verifyToken(token);
+
     const usersCollection = getUsersCollection();
 
     const user = await usersCollection.findOne({
-      authUserId,
+      authUserId: decoded.authUserId,
     });
 
     if (!user) {
@@ -35,11 +38,11 @@ const authenticateUser = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error("Authentication error:", error);
+    console.error("JWT authentication error:", error);
 
-    return res.status(500).json({
+    return res.status(401).json({
       success: false,
-      message: "Authentication failed",
+      message: "Invalid or expired authentication token",
     });
   }
 };

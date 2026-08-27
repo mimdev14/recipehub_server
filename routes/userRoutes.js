@@ -1,11 +1,12 @@
 const express = require("express");
 const { getUsersCollection } = require("../models/userModel");
 const { createOrUpdateUser } = require("../services/userService");
+const { generateToken } = require("../utils/jwt");
 
 const router = express.Router();
 
 /**
- * Sync Better Auth user with RecipeHub user collection
+ * Sync Better Auth user with RecipeHub
  */
 router.post("/sync", async (req, res) => {
   try {
@@ -30,6 +31,19 @@ router.post("/sync", async (req, res) => {
       image,
     });
 
+    // Generate JWT
+    const token = generateToken(user);
+
+    // Store JWT in HTTPOnly cookie
+    res.cookie("recipehub_token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite:
+        process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    // Send response
     return res.status(200).json({
       success: true,
       message: "User synchronized successfully",
@@ -47,8 +61,6 @@ router.post("/sync", async (req, res) => {
 
 /**
  * Get all users
- * Temporary admin-development endpoint.
- * We will protect this later.
  */
 router.get("/", async (req, res) => {
   try {
