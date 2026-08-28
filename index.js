@@ -7,6 +7,7 @@ const cookieParser = require("cookie-parser");
 const { connectDB } = require("./config/db");
 const userRoutes = require("./routes/userRoutes");
 const protectedRoutes = require("./routes/protectedRoutes");
+const recipeRoutes = require("./routes/recipeRoutes");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -27,6 +28,7 @@ app.use(cookieParser());
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/protected", protectedRoutes);
+app.use("/api/recipes", recipeRoutes);
 
 // Root route
 app.get("/", (req, res) => {
