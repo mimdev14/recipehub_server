@@ -2,6 +2,9 @@ const express = require("express");
 const { getUsersCollection } = require("../models/userModel");
 const { createOrUpdateUser } = require("../services/userService");
 const { generateToken } = require("../utils/jwt");
+const { authenticateUser } = require("../middleware/authMiddleware");
+const { requireRole } = require("../middleware/roleMiddleware");
+const { ObjectId } = require("mongodb");
 
 const router = express.Router();
 
@@ -83,6 +86,60 @@ router.get("/", async (req, res) => {
       success: false,
       message: "Failed to fetch users",
     });
+  }
+});
+router.patch("/:id/block", authenticateUser, requireRole("admin"), async (req, res) => {
+  try {
+    const usersCollection = getUsersCollection();
+    await usersCollection.updateOne({ _id: new ObjectId(req.params.id) }, { $set: { isBlocked: true } });
+    res.json({ success: true, message: "User blocked" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Failed to block user" });
+  }
+});
+
+router.patch("/:id/unblock", authenticateUser, requireRole("admin"), async (req, res) => {
+  try {
+    const usersCollection = getUsersCollection();
+    await usersCollection.updateOne({ _id: new ObjectId(req.params.id) }, { $set: { isBlocked: false } });
+    res.json({ success: true, message: "User unblocked" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Failed to unblock user" });
+  }
+});
+
+router.get("/me/stats", authenticateUser, async (req, res) => {
+  try {
+    const { getDB } = require("../config/db");
+    const db = getDB();
+
+    const [totalRecipes, totalFavorites, recipes] = await Promise.all([
+      db.collection("recipes").countDocuments({ authorId: req.user.authUserId }),
+      db.collection("favorites").countDocuments({ userEmail: req.user.email }),
+      db.collection("recipes").find({ authorId: req.user.authUserId }).toArray(),
+    ]);
+
+    const totalLikesReceived = recipes.reduce((sum, r) => sum + (r.likesCount || 0), 0);
+
+    res.json({
+      success: true,
+      stats: { totalRecipes, totalFavorites, totalLikesReceived, isPremium: !!req.user.isPremium },
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Failed to fetch stats" });
+  }
+});
+
+router.patch("/me", authenticateUser, async (req, res) => {
+  try {
+    const usersCollection = getUsersCollection();
+    const { name, image } = req.body;
+    const update = { ...(name && { name }), ...(image && { image }), updatedAt: new Date() };
+
+    await usersCollection.updateOne({ authUserId: req.user.authUserId }, { $set: update });
+    res.json({ success: true, message: "Profile updated" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Failed to update profile" });
   }
 });
 
