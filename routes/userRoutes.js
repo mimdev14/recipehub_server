@@ -1,10 +1,10 @@
 const express = require("express");
+const { ObjectId } = require("mongodb");
 const { getUsersCollection } = require("../models/userModel");
 const { createOrUpdateUser } = require("../services/userService");
 const { generateToken } = require("../utils/jwt");
 const { authenticateUser } = require("../middleware/authMiddleware");
 const { requireRole } = require("../middleware/roleMiddleware");
-const { ObjectId } = require("mongodb");
 
 const router = express.Router();
 
@@ -127,6 +127,31 @@ router.patch("/me", authenticateUser, async (req, res) => {
     res.json({ success: true, message: "Profile updated" });
   } catch (err) {
     res.status(500).json({ success: false, message: "Failed to update profile" });
+  }
+});
+
+router.get("/me", authenticateUser, async (req, res) => {
+  res.json({
+    success: true,
+    user: { role: req.user.role, isPremium: req.user.isPremium, isBlocked: req.user.isBlocked },
+  });
+});
+
+router.get("/admin/stats", authenticateUser, requireRole("admin"), async (req, res) => {
+  try {
+    const { getDB } = require("../config/db");
+    const db = getDB();
+
+    const [totalUsers, totalRecipes, totalPremium, totalReports] = await Promise.all([
+      db.collection("users").countDocuments({}),
+      db.collection("recipes").countDocuments({}),
+      db.collection("users").countDocuments({ isPremium: true }),
+      db.collection("reports").countDocuments({ status: "pending" }),
+    ]);
+
+    res.json({ success: true, stats: { totalUsers, totalRecipes, totalPremium, totalReports } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Failed to fetch admin stats" });
   }
 });
 
