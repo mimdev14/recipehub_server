@@ -62,30 +62,17 @@ router.post("/sync", async (req, res) => {
   }
 });
 
+
 /**
- * Get all users
+ * Get all users (admin only)
  */
-router.get("/", async (req, res) => {
+router.get("/", authenticateUser, requireRole("admin"), async (req, res) => {
   try {
     const usersCollection = getUsersCollection();
-
-    const users = await usersCollection
-      .find({})
-      .sort({ createdAt: -1 })
-      .toArray();
-
-    return res.status(200).json({
-      success: true,
-      count: users.length,
-      users,
-    });
+    const users = await usersCollection.find({}).sort({ createdAt: -1 }).toArray();
+    return res.status(200).json({ success: true, count: users.length, users });
   } catch (error) {
-    console.error("Get users error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch users",
-    });
+    return res.status(500).json({ success: false, message: "Failed to fetch users" });
   }
 });
 router.patch("/:id/block", authenticateUser, requireRole("admin"), async (req, res) => {
