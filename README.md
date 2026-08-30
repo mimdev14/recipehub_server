@@ -1,84 +1,30 @@
-# 🍳 RecipeHub — Server
+# RecipeHub Server
 
-This is the backend API for RecipeHub, a full-stack recipe-sharing platform.
+Backend API for [RecipeHub](https://recipehub-client-gilt.vercel.app) — a recipe sharing platform.
 
-The server provides APIs for users, recipes, favorites, reports, payments, authentication, and administrative operations.
+Live API: https://recipehub-server-eight.vercel.app
 
----
+Client repository: https://github.com/mimdev14/recipehub-client-.git
 
-## 🌐 API
+- 🔐 JWT authentication with HTTP-only cookies, verified via custom Express middleware protecting all dashboard APIs
+- 🍳 Full CRUD API for recipes, with owner-only edit/delete and a free-tier recipe limit
+- 🔎 Search, category filtering (`$in`), and server-side pagination
+- ❤️ Likes, favorites, and recipe reporting endpoints
+- 🛡️ Admin-only routes for managing users, featuring/removing recipes, and resolving reports
+- 🚀 Deployed as a Vercel serverless function
 
-**Production API:** [LIVE_SERVER_URL](https://recipehub-server-eight.vercel.app/)
+## Tech Stack
+- Node.js, Express
+- jsonwebtoken (JWT)
+- MongoDB (native driver)
 
-**Client:** [LIVE_CLIENT_URL](https://recipehub-client-gilt.vercel.app/)
+## Getting Started
+```bash
+npm install
+npm run dev
+```
+Create a `.env` file based on `.env.example` before running.
 
----
-
-## 🛠️ Technologies
-
-- Node.js
-- Express.js
-- MongoDB
-- MongoDB Atlas
-- Better Auth
-- Stripe
-- JWT
-- dotenv
-- CORS
-- Nodemon
-
----
-
-## 📌 Backend Responsibilities
-
-The server handles:
-
-- User management
-- Authentication
-- Authorization
-- Role-based access
-- Recipe CRUD operations
-- Recipe likes
-- Favorites
-- Recipe reports
-- Premium membership
-- Stripe payments
-- Transactions
-- Admin operations
-- User blocking
-- Recipe moderation
-- Pagination
-- Category filtering
-
----
-
-## 📂 Project Structure
-
-```text
-recipehub-server/
-│
-├── config/
-│   └── db.js
-│
-├── middleware/
-│   ├── authMiddleware.js
-│   └── ...
-│
-├── routes/
-│   ├── userRoutes.js
-│   ├── recipeRoutes.js
-│   ├── favoriteRoutes.js
-│   ├── reportRoutes.js
-│   ├── paymentRoutes.js
-│   └── ...
-│
-├── controllers/
-│   └── ...
-│
-├── lib/
-│   └── auth.js
-│
-├── index.js
-├── package.json
-├── .env
-└── README.md
+## API Routes
+- `/api/users/*` — user sync, profile, stats, admin user management
+- `/api/recipes/*` — recipe CRUD, likes, favorites, reports, admin recipe management
